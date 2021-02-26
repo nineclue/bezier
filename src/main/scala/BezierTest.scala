@@ -4,10 +4,21 @@ import javafx.scene.Group
 import javafx.scene.canvas.Canvas
 import javafx.scene.shape.QuadCurve
 import javafx.scene.Scene
+import javafx.scene.text.Text
 import javafx.scene.paint.Color
+import cats.effect._
+import scala.concurrent.duration._
 
-object BezierTest {
-    def main(as: Array[String]) = Application.launch(classOf[BezierTest_], as:_*) 
+object BezierTest extends IOApp {
+    val neverEndingCancel = 
+        IO.unit.foreverM.start.flatMap(f => IO.sleep(2000.millis) >> f.cancel)
+
+    def run(as: List[String]): IO[ExitCode] = {
+        val p = IO.delay(Application.launch(classOf[BezierTest_], as:_*))
+        p.as(ExitCode.Success)
+    }
+
+    // def main(as: Array[String]) = Application.launch(classOf[BezierTest_], as:_*) 
 }
 
 class BezierTest_ extends Application {
@@ -20,13 +31,18 @@ class BezierTest_ extends Application {
         ps.setScene(scene)
         ps.show
 
+
+        val ioJob = IO({
+            val l = new Text("Hello, JavaFX & Cats Effect3")
+            root.getChildren.add(l)
+        })
         test(can, root)
     }
 
     def test(can: Canvas, g: Group, n: Int = 5) = {
         import Bezier.Point
         val gc = can.getGraphicsContext2D
-        val add = 10
+        val add = 5 // difference between QuadCurve shape & our Bezier curve to ease the check
         Range(0, n).foreach({ _ => 
             gc.setStroke(Color.hsb(util.Random.nextInt(360), 1, 1))
             val ps: Seq[Point] = 
