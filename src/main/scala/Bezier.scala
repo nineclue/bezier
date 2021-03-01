@@ -10,6 +10,7 @@ object Bezier {
       * @return : points that constitute Bezier curve, including start & end points
       */
     def apply(segmentNo: Int, ps: Seq[Point]): Seq[Point] = {
+        // reduce to nth point
         def h(n: Int, pss: Seq[Point]): Point = 
             if (pss.size == 1) pss(0)
             else h(n, pss.sliding(2, 1).map({ case pa => 
@@ -17,6 +18,17 @@ object Bezier {
         Range(0, segmentNo).
             map(i => h(i, ps)).toSeq.
             prepended(ps.head).appended(ps.last)
+    }
+
+    def getLayers(segmentNo: Int, ps: Seq[Point]): Seq[Seq[Point]] = {
+        def h(n: Int, pss: Seq[Point], acc: Seq[Seq[Point]]): Seq[Seq[Point]] = 
+            if (pss.size == 1) acc :+ pss
+            else {
+                val reduced = pss.sliding(2, 1).map({ case pa => 
+                                nth(pa(0), pa(1), n, segmentNo)}).toSeq
+                h(n, reduced, acc :+ reduced)
+            }
+        h(segmentNo, ps, Seq(ps))
     }
 
     private def nth(p1: Point, p2: Point, n: Int, total: Int): Point = 

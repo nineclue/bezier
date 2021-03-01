@@ -22,7 +22,7 @@ object BezierTest extends IOApp {
 }
 
 class BezierTest_ extends Application {
-    val size = 800
+    val size = 2000
     override def start(ps: Stage) = {
         val root = new Group()
         val can = new Canvas(size, size)
@@ -36,7 +36,8 @@ class BezierTest_ extends Application {
             val l = new Text("Hello, JavaFX & Cats Effect3")
             root.getChildren.add(l)
         })
-        test(can, root)
+        // test(can, root, 10)
+        test2(can, 10)
     }
 
     def test(can: Canvas, g: Group, n: Int = 5) = {
@@ -58,6 +59,28 @@ class BezierTest_ extends Application {
             // println(bps)
             bps.sliding(2, 1).foreach({ case ps =>
                 gc.strokeLine(ps(0)._1, ps(0)._2, ps(1)._1, ps(1)._2)
+            })
+        })
+    }
+
+    def test2(can: Canvas, n: Int = 5) = {
+        import Bezier.Point
+        val gc = can.getGraphicsContext2D
+
+        Range(0, n).foreach({ _ =>
+            gc.setStroke(Color.hsb(util.Random.nextInt(360), 1, 1))
+            val ps: Seq[Point] = 
+                Range(0, 6).map(_ => util.Random.nextDouble * size).
+                sliding(2, 2).      // 0, 2, 4...
+                map(ps => (ps(0), ps(1))).
+                toSeq
+            val blayers = Bezier.getLayers(30, ps)
+            println(s"BLayers : $blayers")
+            blayers.foreach({ _.sliding(2, 1).foreach({ case ps =>
+                println(s"Points : $ps")
+                if (ps.length <= 2) println(ps)
+                else gc.strokeLine(ps(0)._1, ps(0)._2, ps(1)._1, ps(1)._2)
+                })
             })
         })
     }
