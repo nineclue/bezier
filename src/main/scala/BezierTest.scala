@@ -10,34 +10,42 @@ import cats.effect._
 import scala.concurrent.duration._
 
 object BezierTest extends IOApp {
-    val neverEndingCancel = 
-        IO.unit.foreverM.start.flatMap(f => IO.sleep(2000.millis) >> f.cancel)
-
     def run(as: List[String]): IO[ExitCode] = {
-        val p = IO.delay(Application.launch(classOf[BezierTest_], as:_*))
-        p.as(ExitCode.Success)
+        val launchFx = IO.delay(Application.launch(classOf[BezierTest_], as:_*))
+        launchFx.as(ExitCode.Success)
     }
 
-    // def main(as: Array[String]) = Application.launch(classOf[BezierTest_], as:_*) 
+    val prepareScene: IO[Scene] = {
+        val cSize = 2000
+        IO {
+            val root = new Group()
+            val can = new Canvas(cSize, cSize)
+            root.getChildren.add(can)
+            new Scene(root, cSize, cSize)
+        }
+    }
 }
 
 class BezierTest_ extends Application {
     val size = 2000
     override def start(ps: Stage) = {
+        /*
         val root = new Group()
         val can = new Canvas(size, size)
         root.getChildren.add(can)
         val scene = new Scene(root, size, size)
         ps.setScene(scene)
+        */
         ps.show
 
-
+        /*
         val ioJob = IO({
             val l = new Text("Hello, JavaFX & Cats Effect3")
             root.getChildren.add(l)
         })
         // test(can, root, 10)
         test2(can, 10)
+        */
     }
 
     def test(can: Canvas, g: Group, n: Int = 5) = {
