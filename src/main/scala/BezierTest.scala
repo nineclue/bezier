@@ -9,20 +9,13 @@ import javafx.scene.paint.Color
 import cats.effect._
 import scala.concurrent.duration._
 
-object BezierTest extends IOApp {
-    val neverEndingCancel = 
-        IO.unit.foreverM.start.flatMap(f => IO.sleep(2000.millis) >> f.cancel)
-
-    def run(as: List[String]): IO[ExitCode] = {
-        val p = IO.delay(Application.launch(classOf[BezierTest_], as:_*))
-        p.as(ExitCode.Success)
-    }
-
-    // def main(as: Array[String]) = Application.launch(classOf[BezierTest_], as:_*) 
+object BezierTest {
+    def main(as: Array[String]) = 
+        Application.launch(classOf[BezierTest_], as:_*)
 }
 
 class BezierTest_ extends Application {
-    val size = 800
+    val size = 2000
     override def start(ps: Stage) = {
         val root = new Group()
         val can = new Canvas(size, size)
@@ -31,12 +24,8 @@ class BezierTest_ extends Application {
         ps.setScene(scene)
         ps.show
 
-
-        val ioJob = IO({
-            val l = new Text("Hello, JavaFX & Cats Effect3")
-            root.getChildren.add(l)
-        })
-        test(can, root)
+        // test(can, root, 10)
+        test2(can, 1)
     }
 
     def test(can: Canvas, g: Group, n: Int = 5) = {
@@ -54,11 +43,28 @@ class BezierTest_ extends Application {
             curve.setOpacity(0.2)
             g.getChildren.add(curve)
             val bps = Bezier(10, ps)
-            // println(ps)
-            // println(bps)
             bps.sliding(2, 1).foreach({ case ps =>
                 gc.strokeLine(ps(0)._1, ps(0)._2, ps(1)._1, ps(1)._2)
             })
+        })
+    }
+
+    def test2(can: Canvas, n: Int = 5) = {
+        import Bezier.Point
+        val gc = can.getGraphicsContext2D
+
+        Range(0, n).foreach({ _ =>
+            gc.setStroke(Color.hsb(util.Random.nextInt(360), 1, 1))
+            val ps: Seq[Point] = 
+                Range(0, 8).map(_ => util.Random.nextDouble * size).
+                sliding(2, 2).      // 0, 2, 4...
+                map(ps => (ps(0), ps(1))).
+                toSeq
+            val blayers = Bezier.getLayers(30, ps)
+            println(s"BLayers : $blayers")
+            DrawBezierLayers.draw({ case (p1, p2, i) =>
+                gc.strokeLine(p1._1, p1._2, p2._1, p2._2)
+            }, { case (p1, p2, i) => ()})(blayers)
         })
     }
 }

@@ -23,9 +23,9 @@ lazy val root = (project in file("."))
 		name := "openjfx-sbt",
 		libraryDependencies ++= Seq(
 			// JavaFX 11 jars are distributed for each platform
-			"org.openjfx" % "javafx-controls" % "11.0.1" classifier osType.value,
-			"org.openjfx" % "javafx-graphics" % "11.0.1" classifier osType.value,
-			"org.openjfx" % "javafx-base" % "11.0.1" classifier osType.value,
+			"org.openjfx" % "javafx-controls" % "11.0.2" classifier osType.value,
+			"org.openjfx" % "javafx-graphics" % "11.0.2" classifier osType.value,
+			"org.openjfx" % "javafx-base" % "11.0.2" classifier osType.value,
             "org.typelevel" %% "cats-effect" % "3.0.0-RC2"
 		),
 
