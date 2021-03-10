@@ -1,7 +1,9 @@
+import scala.annotation.tailrec
+
 object Bezier {
 
     type Point = (Double, Double)
-    type BezierLayers = Seq[Seq[Point]]
+    type BezierLayer = Seq[Seq[Point]]
 
     /**
       * Calculate points of Bezier curve
@@ -12,6 +14,7 @@ object Bezier {
       */
     def apply(segmentNo: Int, ps: Seq[Point]): Seq[Point] = {
         // reduce to nth point
+        @tailrec
         def h(n: Int, pss: Seq[Point]): Point = 
             if (pss.size == 1) pss(0)
             else h(n, pss.sliding(2, 1).map({ case pa => 
@@ -21,15 +24,18 @@ object Bezier {
             prepended(ps.head).appended(ps.last)
     }
 
-    def getLayers(segmentNo: Int, ps: Seq[Point]): BezierLayers = {
-        def h(n: Int, pss: Seq[Point], acc: Seq[Seq[Point]]): Seq[Seq[Point]] = 
+    // same as apply, including all intermediate results
+    def getLayers(segmentNo: Int, ps: Seq[Point]): Seq[BezierLayer] = {
+        @tailrec
+        def h(n: Int, pss: Seq[Point], acc: Seq[Seq[Point]]): BezierLayer = 
             if (pss.size == 1) acc :+ pss
             else {
                 val reduced = pss.sliding(2, 1).map({ case pa => 
                                 nth(pa(0), pa(1), n, segmentNo)}).toSeq
                 h(n, reduced, acc :+ pss)
             }
-        h(segmentNo, ps, Seq.empty)
+        Range(0, segmentNo).toSeq.
+            map(i => h(i, ps, Seq.empty))
     }
 
     // nth point along the line between p1 and p2, segmented by total number

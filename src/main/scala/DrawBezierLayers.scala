@@ -1,14 +1,18 @@
-import Bezier.{Point, BezierLayers}
+import Bezier.{Point, BezierLayer}
 
 object DrawBezierLayers {
     type DrawLine = (Point, Point, Int) => Unit
     type DrawPoint = (Point, Point, Int) => Unit
 
-    def draw(line: DrawLine, point: DrawPoint)(ls: BezierLayers) = 
+    def draw(line: DrawLine, point: DrawPoint)(ls: Seq[BezierLayer]) = 
         ls.zipWithIndex.foreach({ (layer, i) => 
-            println(s"$i: $layer")
-            layer.sliding(2, 1).foreach({ ps =>
-                if (ps.length == 2) line(ps(0), ps(1), i)
+            drawLayer(line, point)(layer)
+        })
+
+    def drawLayer(line: DrawLine, point: DrawPoint)(l: BezierLayer) = 
+        l.zipWithIndex.foreach({ (ps, i) => 
+            ps.sliding(2, 1).foreach({ pss => 
+                if (pss.length == 2) line(pss(0), pss(1), i)
             })
         })
 }
