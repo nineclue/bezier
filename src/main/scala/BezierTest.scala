@@ -24,8 +24,10 @@ class BezierTest_ extends Application {
         ps.setScene(scene)
         ps.show
 
+        val h = BezierHandler(root)
+        scene.setOnMouseClicked(h)
         // testBezierApply(can, root, 10)
-        testBezierGetLayers(can, 1)
+        // testBezierGetLayers(can, 1)
     }
 
     def testBezierApply(can: Canvas, g: Group, n: Int = 5) = {
