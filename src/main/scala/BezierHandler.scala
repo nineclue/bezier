@@ -4,6 +4,7 @@ import javafx.scene.{Parent, Group}
 import javafx.scene.shape.{Circle, Line}
 import javafx.scene.paint.Color
 import javafx.beans.property.DoubleProperty
+import collection.mutable.ArrayBuffer
 
 trait PointHandler {
     def setHand(): Unit
@@ -11,11 +12,10 @@ trait PointHandler {
     def setNormal(): Unit
 }
 
-case class BezierHandler(bs: Seq[Bezier], redraw: () => Unit, ph: PointHandler) extends EventHandler[MouseEvent] {
+case class BezierHandler(bs: ArrayBuffer[Bezier], redraw: () => Unit, ph: PointHandler) extends EventHandler[MouseEvent] {
     var grabbed: Option[(Int, Int)] = None
 
     def handle(e: MouseEvent) = {
-        // println(s"$e, $grabbed")
         e.getEventType match {
             case MouseEvent.MOUSE_MOVED =>
                 if (grabbed.isEmpty) {
@@ -25,8 +25,14 @@ case class BezierHandler(bs: Seq[Bezier], redraw: () => Unit, ph: PointHandler) 
                 }
             case MouseEvent.MOUSE_PRESSED =>
                 grabbed = bs.zipWithIndex.
-                    flatMap({ case ((b, bi)) => b.near(e.getX(), e.getY()).map(pi => (bi, pi)) }).headOption
+                    // find adjacent point and pair with Bezier Sequence index
+                    flatMap({ case ((b, bi)) => b.near(e.getX(), e.getY()).map(pi => (bi, pi)) }).
+                    headOption
                 if (grabbed.nonEmpty) ph.setGrabbed()
+                else {
+                    bs += Bezier.append(bs)
+                    redraw()
+                }
             case MouseEvent.MOUSE_RELEASED =>
                 if (grabbed.nonEmpty) {
                     grabbed = None

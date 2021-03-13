@@ -9,6 +9,7 @@ import javafx.scene.text.Text
 import javafx.scene.paint.Color
 import cats.effect._
 import scala.concurrent.duration._
+import collection.mutable.ArrayBuffer
 
 object BezierTest {
     def main(as: Array[String]) = 
@@ -16,7 +17,7 @@ object BezierTest {
 }
 
 class BezierTest_ extends Application {
-    val size = 800
+    val size = 2000
     override def start(ps: Stage) = {
         val root = new Group()
         val can = new Canvas(size, size)
@@ -30,7 +31,8 @@ class BezierTest_ extends Application {
         val drawer = BezierDrawer.draw(
             drawCircle(gc, 10, Color.ORANGE, Color.SLATEGRAY, 2.0)_, 
             drawCircle(gc, 5, Color.PAPAYAWHIP, Color.SLATEGRAY, 1.0)_, 
-            drawBezierLine(gc)_, drawBezierControlLine(gc)_)
+            drawLine(gc, Color.BLACK, 3.0)_, 
+            drawLine(gc, Color.TOMATO, 1.0)_)
         drawer(b, true)
 
         val mouseCursorHandler = new PointHandler {
@@ -38,7 +40,7 @@ class BezierTest_ extends Application {
             def setGrabbed() = can.setCursor(Cursor.CLOSED_HAND)
             def setNormal() = can.setCursor(Cursor.DEFAULT)
         }
-        val h = BezierHandler(Seq(b), () => { gc.clearRect(0, 0, size, size); drawer(b, true) }, mouseCursorHandler)
+        val h = BezierHandler(ArrayBuffer(b), () => { gc.clearRect(0, 0, size, size); drawer(b, true) }, mouseCursorHandler)
         can.setOnMousePressed(h)
         can.setOnMouseReleased(h)
         can.setOnMouseMoved(h)
@@ -48,15 +50,9 @@ class BezierTest_ extends Application {
 
     }
 
-    def drawBezierLine(gc: GraphicsContext)(p1: Point, p2: Point) = {
-        gc.setLineWidth(3.0)
-        gc.setStroke(Color.BLACK)
-        gc.strokeLine(p1.x, p1.y, p2.x, p2.y)
-    }
-
-    def drawBezierControlLine(gc: GraphicsContext)(p1: Point, p2: Point) = {
-        gc.setLineWidth(1.0)
-        gc.setStroke(Color.TOMATO)
+    def drawLine(gc: GraphicsContext, stroke: Color, width: Double)(p1: Point, p2: Point) = {
+        gc.setLineWidth(width)
+        gc.setStroke(stroke)
         gc.strokeLine(p1.x, p1.y, p2.x, p2.y)
     }
 

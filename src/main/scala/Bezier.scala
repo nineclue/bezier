@@ -1,4 +1,5 @@
 import scala.annotation.tailrec
+import collection.mutable.ArrayBuffer
 
 object Bezier {
     type BezierLayer = Seq[Seq[Point]]
@@ -39,6 +40,10 @@ object Bezier {
     // nth point along the line between p1 and p2, segmented by total number
     private def nth(p1: Point, p2: Point, n: Int, total: Int): Point = 
         Point((p2.x - p1.x) / total * n + p1.x, ((p2.y - p1.y) / total) * n + p1.y)
+
+    def append(bs: ArrayBuffer[Bezier]): Bezier = ???
+    
+    def close(bs: ArrayBuffer[Bezier]): Bezier = ???
 }
 
 case class Bezier(var start: Point, var c1: Point, var c2: Point, var end: Point) {  // QuadCurve
