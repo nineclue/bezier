@@ -1,8 +1,6 @@
 import scala.annotation.tailrec
 
 object Bezier {
-
-    type Point = (Double, Double)
     type BezierLayer = Seq[Seq[Point]]
 
     /**
@@ -12,7 +10,7 @@ object Bezier {
       * @param ps : points, head & last are start & end points, middle are control points
       * @return : points that constitute Bezier curve, including start & end points
       */
-    def apply(segmentNo: Int, ps: Seq[Point]): Seq[Point] = {
+    def apply(ps: Seq[Point], segmentNo: Int = 10): Seq[Point] = {
         // reduce to nth point
         @tailrec
         def h(n: Int, pss: Seq[Point]): Point = 
@@ -24,8 +22,8 @@ object Bezier {
             prepended(ps.head).appended(ps.last)
     }
 
-    // same as apply, including all intermediate results
-    def getLayers(segmentNo: Int, ps: Seq[Point]): Seq[BezierLayer] = {
+    // same as apply, result includes all intermediate calculated points
+    def getLayers(ps: Seq[Point], segmentNo: Int = 10): Seq[BezierLayer] = {
         @tailrec
         def h(n: Int, pss: Seq[Point], acc: Seq[Seq[Point]]): BezierLayer = 
             if (pss.size == 1) acc :+ pss
@@ -40,6 +38,18 @@ object Bezier {
 
     // nth point along the line between p1 and p2, segmented by total number
     private def nth(p1: Point, p2: Point, n: Int, total: Int): Point = 
-        (((p2._1 - p1._1) / total) * n + p1._1, 
-         ((p2._2 - p1._2) / total) * n + p1._2)
+        Point((p2.x - p1.x) / total * n + p1.x, ((p2.y - p1.y) / total) * n + p1.y)
+}
+
+case class Bezier(var start: Point, var c1: Point, var c2: Point, var end: Point) {  // QuadCurve
+    private val segments = 15
+    def points = Bezier.apply(Seq(start, c1, c2, end), segments)
+    def near(x: Double, y: Double) = 
+        Seq(start, c1, c2, end).zipWithIndex.find({ case ((p, i)) => p.near(x, y) }).map(_._2)
+    def update(i: Int, x: Double, y: Double) = i match {
+        case 0 => start = Point(x, y)
+        case 1 => c1 = Point(x, y)
+        case 2 => c2 = Point(x, y)
+        case 3 => end = Point(x, y)
+    }
 }

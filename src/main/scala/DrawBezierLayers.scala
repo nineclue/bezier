@@ -1,4 +1,4 @@
-import Bezier.{Point, BezierLayer}
+import Bezier.{BezierLayer}
 
 object DrawBezierLayers {
     type DrawLine = (Point, Point, Int) => Unit
