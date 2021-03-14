@@ -25,23 +25,27 @@ trait GIO {
     def draw(ps: BezierAsPoints): Unit = {
         clear()
         ps._1.sliding(2, 1).zipWithIndex.foreach({ case (ks, i) => 
-            // draw line
-            val bls = Bezier(ps, i)
-            bls.sliding(2, 1).foreach({ case lps =>
-                drawLine(lps(0), lps(1), lineColor, lineWidth)
-            })
+            if (ks.length == 1)
+                drawCircle(ks(0), knotRadius, knotFill, knotStroke, 1.0)
+            else {            
+                // draw line
+                val bls = Bezier(ps, i)
+                bls.sliding(2, 1).foreach({ case lps =>
+                    drawLine(lps(0), lps(1), lineColor, lineWidth)
+                })
 
-            // draw control line
-            drawLine(ks(0), ps._2(i), cLineColor, cLineWidth)
-            drawLine(ks(1), ps._3(i), cLineColor, cLineWidth)
+                // draw control line
+                drawLine(ks(0), ps._2(i), cLineColor, cLineWidth)
+                drawLine(ks(1), ps._3(i), cLineColor, cLineWidth)
 
-            // draw controls
-            drawCircle(ps._2(i), controlRadius, controlFill, controlStroke, 1.0)
-            drawCircle(ps._3(i), controlRadius, controlFill, controlStroke, 1.0)
+                // draw controls
+                drawCircle(ps._2(i), controlRadius, controlFill, controlStroke, 1.0)
+                drawCircle(ps._3(i), controlRadius, controlFill, controlStroke, 1.0)
 
-            // draw knots
-            drawCircle(ks(0), knotRadius, knotFill, knotStroke, 1.0)
-            drawCircle(ks(1), knotRadius, knotFill, knotStroke, 1.0)
+                // draw knots
+                drawCircle(ks(0), knotRadius, knotFill, knotStroke, 1.0)
+                drawCircle(ks(1), knotRadius, knotFill, knotStroke, 1.0)
+            }
         })
     }
 }
@@ -69,6 +73,10 @@ trait BezierHandler {
     def mousePressed(p: Point, button: Int) = {
         grabbed = nearPoints(p.x, p.y).headOption
         if (grabbed.nonEmpty) h.setGrabbed()
+        else {
+            Bezier.append(bps, p)
+            h.draw(bps)
+        }
     }
 
     def mouseReleased(p: Point) = 
@@ -78,7 +86,6 @@ trait BezierHandler {
         }
 
     def mouseDragged(p: Point) = {
-        println(grabbed)
         grabbed match {
             case Some((0, i)) =>
                 bps._1.update(i, p)
@@ -89,7 +96,7 @@ trait BezierHandler {
             case Some((2, i)) =>
                 bps._3.update(i, p)
                 h.draw(bps)
-            // case _ =>
+            case _ =>
         }
     }
 }
