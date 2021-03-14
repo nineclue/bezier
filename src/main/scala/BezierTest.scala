@@ -27,7 +27,7 @@ class BezierTest_ extends Application {
         ps.show
 
         // val bps = (ArrayBuffer(Point(100, 100), Point(700, 700)), ArrayBuffer(Point(300, 100)), ArrayBuffer(Point(500, 500)))
-        val bps = (ArrayBuffer.empty[Point], ArrayBuffer.empty[Point], ArrayBuffer.empty[Point])
+        val bps = (ArrayBuffer.empty[Point], ArrayBuffer.empty[Point], ArrayBuffer.empty[Point], false)
         val gio = FXGIO(can)
         gio.draw(bps)
 

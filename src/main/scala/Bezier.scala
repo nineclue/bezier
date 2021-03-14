@@ -11,7 +11,7 @@ trait BezierAsPoints[A[_]] {
 
 object Bezier {
     type BezierLayer = Seq[Seq[Point]]
-    type BezierAsPoints = (ArrayBuffer[Point], ArrayBuffer[Point], ArrayBuffer[Point])
+    type BezierAsPoints = (ArrayBuffer[Point], ArrayBuffer[Point], ArrayBuffer[Point], Boolean)
 
     /**
       * Calculate points of Bezier curve
@@ -54,7 +54,7 @@ object Bezier {
         Point((p2.x - p1.x) / total * n + p1.x, ((p2.y - p1.y) / total) * n + p1.y)
 
     def assemble(ps: BezierAsPoints): Iterator[Bezier] = {
-        val (knots, c1s, c2s) = ps
+        val (knots, c1s, c2s, _) = ps
         knots.sliding(2, 1).zipWithIndex.map({ case (pss, i) =>
             Bezier(pss(0), c1s(i), c2s(i), pss(1))
         })
@@ -63,7 +63,7 @@ object Bezier {
     def deassemble(bs: Seq[Bezier]): BezierAsPoints = ???
 
     def append(bps: BezierAsPoints, knot: Point): Unit = {
-        val (ks, c1s, c2s) = bps
+        val (ks, c1s, c2s, _) = bps
         ks += knot
         ks.length match {
             case 1 => 
