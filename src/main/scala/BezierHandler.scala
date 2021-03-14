@@ -72,8 +72,9 @@ trait BezierHandler {
 
     def mousePressed(p: Point, button: Int) = {
         grabbed = nearPoints(p.x, p.y).headOption
-        if (grabbed.nonEmpty) h.setGrabbed()
-        else {
+        if (grabbed.nonEmpty) {
+            h.setGrabbed()
+        } else {
             Bezier.append(bps, p)
             h.draw(bps)
         }
