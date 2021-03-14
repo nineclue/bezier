@@ -1,8 +1,17 @@
 import scala.annotation.tailrec
 import collection.mutable.ArrayBuffer
 
+/*
+trait BezierAsPoints[A[_]] {
+    def knots: A[Point]
+    def controls1: A[Point]
+    def controls2: A[Point]
+}
+*/
+
 object Bezier {
     type BezierLayer = Seq[Seq[Point]]
+    type BezierAsPoints = (ArrayBuffer[Point], ArrayBuffer[Point], ArrayBuffer[Point])
 
     /**
       * Calculate points of Bezier curve
@@ -11,7 +20,7 @@ object Bezier {
       * @param ps : points, head & last are start & end points, middle are control points
       * @return : points that constitute Bezier curve, including start & end points
       */
-    def apply(ps: Seq[Point], segmentNo: Int = 10): Seq[Point] = {
+    def apply(ps: Seq[Point], segmentNo: Int): Seq[Point] = {
         // reduce to nth point
         @tailrec
         def h(n: Int, pss: Seq[Point]): Point = 
@@ -22,6 +31,9 @@ object Bezier {
             map(i => h(i, ps)).
             prepended(ps.head).appended(ps.last)
     }
+
+    def apply(ps: BezierAsPoints, i: Int, segmentNo: Int = 10): Seq[Point] = 
+        apply(Seq(ps._1(i), ps._2(i), ps._3(i), ps._1(i+1)), segmentNo)
 
     // same as apply, result includes all intermediate calculated points
     def getLayers(ps: Seq[Point], segmentNo: Int = 10): Seq[BezierLayer] = {
@@ -41,7 +53,16 @@ object Bezier {
     private def nth(p1: Point, p2: Point, n: Int, total: Int): Point = 
         Point((p2.x - p1.x) / total * n + p1.x, ((p2.y - p1.y) / total) * n + p1.y)
 
-    def append(bs: ArrayBuffer[Bezier]): Bezier = ???
+    def assemble(ps: BezierAsPoints): Iterator[Bezier] = {
+        val (knots, c1s, c2s) = ps
+        knots.sliding(2, 1).zipWithIndex.map({ case (pss, i) =>
+            Bezier(pss(0), c1s(i), c2s(i), pss(1))
+        })
+    }
+
+    def deassemble(bs: Seq[Bezier]): BezierAsPoints = ???
+
+    def append(bs: ArrayBuffer[Bezier], knot: Point): Bezier = ???
     
     def close(bs: ArrayBuffer[Bezier]): Bezier = ???
 }

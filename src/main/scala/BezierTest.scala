@@ -26,21 +26,11 @@ class BezierTest_ extends Application {
         ps.setScene(scene)
         ps.show
 
-        val b = Bezier(Point(100, 100), Point(300, 100), Point(500, 500), Point(700, 700))
-        val gc = can.getGraphicsContext2D
-        val drawer = BezierDrawer.draw(
-            drawCircle(gc, 10, Color.ORANGE, Color.SLATEGRAY, 2.0)_, 
-            drawCircle(gc, 5, Color.PAPAYAWHIP, Color.SLATEGRAY, 1.0)_, 
-            drawLine(gc, Color.BLACK, 3.0)_, 
-            drawLine(gc, Color.TOMATO, 1.0)_)
-        drawer(b, true)
+        val bps = (ArrayBuffer(Point(100, 100), Point(700, 700)), ArrayBuffer(Point(300, 100)), ArrayBuffer(Point(500, 500)))
+        val gio = FXGIO(can)
+        gio.draw(bps)
 
-        val mouseCursorHandler = new PointHandler {
-            def setHand() = can.setCursor(Cursor.HAND)
-            def setGrabbed() = can.setCursor(Cursor.CLOSED_HAND)
-            def setNormal() = can.setCursor(Cursor.DEFAULT)
-        }
-        val h = BezierHandler(ArrayBuffer(b), () => { gc.clearRect(0, 0, size, size); drawer(b, true) }, mouseCursorHandler)
+        val h = FXBezierHandler(bps, gio)
         can.setOnMousePressed(h)
         can.setOnMouseReleased(h)
         can.setOnMouseMoved(h)
@@ -48,22 +38,6 @@ class BezierTest_ extends Application {
         // testBezierApply(can, root, 10)
         // testBezierGetLayers(can, 1)
 
-    }
-
-    def drawLine(gc: GraphicsContext, stroke: Color, width: Double)(p1: Point, p2: Point) = {
-        gc.setLineWidth(width)
-        gc.setStroke(stroke)
-        gc.strokeLine(p1.x, p1.y, p2.x, p2.y)
-    }
-
-    def drawCircle(gc: GraphicsContext, r: Double, fill: Color, stroke: Color, strokeWidth: Double)(p: Point) = {
-        gc.setLineWidth(strokeWidth)
-        gc.setFill(fill)
-        gc.setStroke(stroke)
-        val x = p.x - r
-        val y = p.y - r
-        gc.fillOval(x, y, r*2, r*2)
-        gc.strokeOval(x, y, r*2, r*2)
     }
 
     def testBezierApply(can: Canvas, g: Group, n: Int = 5) = {
@@ -79,7 +53,7 @@ class BezierTest_ extends Application {
             val curve = new QuadCurve(ps(0).x, ps(0).y + add, ps(1).x, ps(1).y + add, ps(2).x, ps(2).y + add)
             curve.setOpacity(0.2)
             g.getChildren.add(curve)
-            val bps = Bezier(ps)
+            val bps = Bezier(ps, 15)
             bps.sliding(2, 1).foreach({ case ps =>
                 gc.strokeLine(ps(0).x, ps(0).y, ps(1).x, ps(1).y)
             })
