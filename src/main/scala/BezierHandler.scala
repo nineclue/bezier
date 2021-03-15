@@ -72,24 +72,18 @@ trait BezierHandler {
     def mousePressed(p: Point, button: Int) = {
         grabbed = nearPoints(p.x, p.y).headOption
         grabbed match {
-            case Some(0, 0) if button == 2 =>  // 1st starting knot
-                println("close knot!")
-
-            case None => 
-                bps.append(p)
+            case Some(0, 0) if button == 2 =>  // 1st starting knot                
+                bps.close()
+                grabbed = None
                 h.draw(bps)
+            case None => 
+                if (!bps.closed) {  // ignore new point in closed bezier
+                    bps.append(p)
+                    h.draw(bps)
+                }
             case _ =>
                 h.setGrabbed()
         }
-        /*
-        if (grabbed.nonEmpty) {
-            if (button == 2 && grabbed.get)
-            h.setGrabbed()
-        } else {
-            Bezier.append(bps, p)
-            h.draw(bps)
-        }
-        */
     }
 
     def mouseReleased(p: Point) = 
@@ -101,13 +95,15 @@ trait BezierHandler {
     def mouseDragged(p: Point) = {
         grabbed match {
             case Some((0, i)) =>
-                bps._1.update(i, p)
+                bps.knots.update(i, p)
+                if (i == 0 && bps.closed) // move both start & end knots
+                    bps.knots.update(bps.knots.length-1, p)
                 h.draw(bps)
             case Some((1, i)) =>
-                bps._2.update(i, p)
+                bps.c1s.update(i, p)
                 h.draw(bps)
             case Some((2, i)) =>
-                bps._3.update(i, p)
+                bps.c2s.update(i, p)
                 h.draw(bps)
             case _ =>
         }

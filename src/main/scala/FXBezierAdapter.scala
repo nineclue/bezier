@@ -72,3 +72,4 @@ case class FXGIO(can: Canvas) extends GIO {
         gc.strokeOval(x, y, r*2, r*2)    
     }
 }
+

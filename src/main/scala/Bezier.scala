@@ -68,16 +68,47 @@ case class Bezier(var start: Point, var c1: Point, var c2: Point, var end: Point
 }
 
 case class BezierSpline(knots: ArrayBuffer[Point], c1s: ArrayBuffer[Point], c2s: ArrayBuffer[Point], var closed: Boolean = false) {
+    def closable() = knots.length >= 2
+    def close() = 
+        if (closable()) {
+            val n = knots.length
+            val a = ArrayBuffer.fill(n)(1.0)
+            val b = ArrayBuffer.fill(n)(4.0)
+            val c = ArrayBuffer.fill(n)(1.0)
+
+            val rhs = ArrayBuffer.fill(n)(0.0)
+            Range(0, n).foreach({ i =>
+                val j = if (i == n-1) 0 else i+1
+                rhs(i) = knots(i).x * 4 + knots(j).x * 2
+            })
+            val xs = solveCyclic(a, b, c, 1, 1, rhs)
+
+            Range(0, n).foreach({ i =>
+                val j = if (i == n-1) 0 else i+1
+                rhs(i) = knots(i).y * 4 + knots(j).y * 2
+            })
+            val ys = solveCyclic(a, b, c, 1, 1, rhs)
+
+            c1s.clear
+            c2s.clear
+            Range(0, n).foreach({ i =>
+                c1s += Point(xs(i), ys(i))
+                c2s += Point(2 * knots(i).x - xs(i), 2 * knots(i).y - ys(i))
+            })
+            closed = true
+            knots += knots(0)   // CHECK!
+        }
+
     def append(knot: Point): Unit = {
         knots += knot
-        (knots.length, closed) match {
-            case (1, _) => 
-            case (2, _) => 
+        knots.length match {
+            case 1 => 
+            case 2 => 
                 val c1 = Point((knots(0).x * 2 + knot.x) / 3, (knots(0).y * 2 + knot.y) / 3)
                 val c2 = Point(2 * c1.x - knots(0).x, (2 * c1.y - knots(0).y))
                 c1s += c1
                 c2s += c2
-            case (n, false) =>
+            case n =>
                 val rhs: ArrayBuffer[(Double, Double)] = ArrayBuffer(
                     Range(1, n-1).map(i => (knots(i).x * 4 + knots(i+1).x * 2, knots(i).y * 4 + knots(i+1).y * 2)):_*).
                     prepend((knots(0).x + knots(1).x * 2, knots(0).y + knots(1).y * 2)).
@@ -93,35 +124,6 @@ case class BezierSpline(knots: ArrayBuffer[Point], c1s: ArrayBuffer[Point], c2s:
                         if (i < n-1) Point(knots(i+1).x * 2 - xs(i+1), knots(i+1).y * 2 - ys(i+1))
                         else Point((knots(n-1).x + xs(n-2)) / 2, (knots(n-1).y + ys(n-2)) / 2)
                     c2s += c2
-                })
-            case (n, true) =>
-                val a = ArrayBuffer.fill(n)(0.0)
-                val b = ArrayBuffer.fill(n)(0.0)
-                val c = ArrayBuffer.fill(n)(0.0)
-                Range(0, n).foreach({ i => 
-                    a(i) = 1.0
-                    b(i) = 4.0
-                    c(i) = 1.0
-                })
-
-                val rhs = ArrayBuffer.fill(n)(0.0)
-                Range(0, n).foreach({ i =>
-                    val j = if (i == n-1) 0 else i+1
-                    rhs(i) = knots(i).x * 4 + knots(j).x * 2
-                })
-                val xs = solveCyclic(a, b, c, 1, 1, rhs)
-
-                Range(0, n).foreach({ i =>
-                    val j = if (i == n-1) 0 else i+1
-                    rhs(i) = knots(i).y * 4 + knots(j).y * 2
-                })
-                val ys = solveCyclic(a, b, c, 1, 1, rhs)
-
-                c1s.clear
-                c2s.clear
-                Range(0, n).foreach({ i =>
-                    c1s += Point(xs(i), ys(i))
-                    c2s += Point(knots(i).x * 2 - xs(i), knots(i).y * 2 - ys(i))
                 })
         } 
     }
@@ -154,7 +156,9 @@ case class BezierSpline(knots: ArrayBuffer[Point], c1s: ArrayBuffer[Point], c2s:
             bet = b(j) - a(j) * gam(j)
             u(j) = (rhs(j) - a(j) * u(j-1)) / bet
         })
-        Range(1, n).foreach({ j => u(n-j-1) -= gam(n-j) * u(n-j) })
+        Range(1, n).foreach({ j => 
+            u(n-j-1) -= gam(n-j) * u(n-j) 
+        })
         u
     }
 
@@ -167,14 +171,11 @@ case class BezierSpline(knots: ArrayBuffer[Point], c1s: ArrayBuffer[Point], c2s:
         Range(1, n-1).foreach(i => bb(i) = b(i))
 
         val solution = solveTridiagonal(a, bb, c, rhs)
-        val x = ArrayBuffer.fill(n)(0.0) // substitute with tabulate
-        Range(0, n).foreach(k => x(k) = solution(k))
-
+        val x = ArrayBuffer.tabulate(n) { case k => solution(k) }
         val u = ArrayBuffer.fill(n)(0.0)
         u(0) = gamma
         u(n-1) = alpha
         val solution_ = solveTridiagonal(a, bb, c, u)
-
         val z = ArrayBuffer.fill(n)(0.0)
         Range(0, n).foreach(k => z(k) = solution_(k))
 
