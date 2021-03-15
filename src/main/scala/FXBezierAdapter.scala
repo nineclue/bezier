@@ -5,7 +5,6 @@ import javafx.scene.shape.{Circle, Line}
 import javafx.scene.paint.Color
 import javafx.scene.canvas.Canvas
 import javafx.scene.Cursor
-import Bezier.BezierAsPoints
 import collection.mutable.ArrayBuffer
 
 trait PointHandler {
@@ -14,7 +13,7 @@ trait PointHandler {
     def setNormal(): Unit
 }
 
-case class FXBezierHandler(bps: BezierAsPoints, h: GIO) extends EventHandler[MouseEvent] with BezierHandler {
+case class FXBezierHandler(bps: BezierSpline, h: GIO) extends EventHandler[MouseEvent] with BezierHandler {
     def handle(e: MouseEvent) = {
         val p = Point(e.getX(), e.getY())
         e.getEventType match {

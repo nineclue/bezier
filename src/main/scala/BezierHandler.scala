@@ -1,5 +1,4 @@
 import collection.mutable.ArrayBuffer
-import Bezier.BezierAsPoints
 
 trait GIO {
     type C
@@ -22,9 +21,9 @@ trait GIO {
     def drawCircle(p: Point, r: Double, fill: C, stroke: C, strokeWidth: Double): Unit
     def clear(): Unit
 
-    def draw(ps: BezierAsPoints): Unit = {
+    def draw(ps: BezierSpline): Unit = {
         clear()
-        ps._1.sliding(2, 1).zipWithIndex.foreach({ case (ks, i) => 
+        ps.knots.sliding(2, 1).zipWithIndex.foreach({ case (ks, i) => 
             if (ks.length == 1)
                 drawCircle(ks(0), knotRadius, knotFill, knotStroke, 1.0)
             else {            
@@ -35,12 +34,12 @@ trait GIO {
                 })
 
                 // draw control line
-                drawLine(ks(0), ps._2(i), cLineColor, cLineWidth)
-                drawLine(ks(1), ps._3(i), cLineColor, cLineWidth)
+                drawLine(ks(0), ps.c1s(i), cLineColor, cLineWidth)
+                drawLine(ks(1), ps.c2s(i), cLineColor, cLineWidth)
 
                 // draw controls
-                drawCircle(ps._2(i), controlRadius, controlFill, controlStroke, 1.0)
-                drawCircle(ps._3(i), controlRadius, controlFill, controlStroke, 1.0)
+                drawCircle(ps.c1s(i), controlRadius, controlFill, controlStroke, 1.0)
+                drawCircle(ps.c2s(i), controlRadius, controlFill, controlStroke, 1.0)
 
                 // draw knots
                 drawCircle(ks(0), knotRadius, knotFill, knotStroke, 1.0)
@@ -51,7 +50,7 @@ trait GIO {
 }
 
 trait BezierHandler {
-    val bps: BezierAsPoints
+    val bps: BezierSpline
     val h: GIO
 
     // point type, point number
@@ -72,12 +71,25 @@ trait BezierHandler {
 
     def mousePressed(p: Point, button: Int) = {
         grabbed = nearPoints(p.x, p.y).headOption
+        grabbed match {
+            case Some(0, 0) if button == 2 =>  // 1st starting knot
+                println("close knot!")
+
+            case None => 
+                bps.append(p)
+                h.draw(bps)
+            case _ =>
+                h.setGrabbed()
+        }
+        /*
         if (grabbed.nonEmpty) {
+            if (button == 2 && grabbed.get)
             h.setGrabbed()
         } else {
             Bezier.append(bps, p)
             h.draw(bps)
         }
+        */
     }
 
     def mouseReleased(p: Point) = 
