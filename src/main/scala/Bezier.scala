@@ -93,7 +93,8 @@ case class BezierSpline(knots: ArrayBuffer[Point], c1s: ArrayBuffer[Point], c2s:
             c2s.clear
             Range(0, n).foreach({ i =>
                 c1s += Point(xs(i), ys(i))
-                c2s += Point(2 * knots(i).x - xs(i), 2 * knots(i).y - ys(i))
+                val c2i = (i + 1) % n
+                c2s += Point(2 * knots(c2i).x - xs(c2i), 2 * knots(c2i).y - ys(c2i))
             })
             closed = true
             knots += knots(0)   // CHECK!

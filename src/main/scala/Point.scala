@@ -5,6 +5,7 @@ trait Point {
     def y: Double
     def near(xx: Double, yy: Double, tolerance: Double = 5.0) = 
         math.sqrt(math.pow(xx - x, 2) + math.pow(yy - y, 2)) <= tolerance
+    override def toString(): String = s"Point($x,$y)"
 }
 
 object Point {
