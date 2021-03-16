@@ -69,6 +69,7 @@ trait GIO {
                         if (cross % 2 == 1) {
                             startX = x
                         } else {
+                            println(s"Drawing ($startX, $y) - ($x, $y)")
                             drawLine(Point(startX, y), Point(x, y), c, 1.0)
                         }
                     case _ =>
