@@ -7,6 +7,8 @@ import javafx.scene.shape.QuadCurve
 import javafx.scene.Scene
 import javafx.scene.text.Text
 import javafx.scene.paint.Color
+import javafx.scene.input.{KeyEvent, KeyCode}
+import javafx.event.EventHandler
 import cats.effect._
 import scala.concurrent.duration._
 import collection.mutable.ArrayBuffer
@@ -35,6 +37,20 @@ class BezierTest_ extends Application {
         can.setOnMouseReleased(h)
         can.setOnMouseMoved(h)
         can.setOnMouseDragged(h)
+
+        scene.setOnKeyPressed(new EventHandler[KeyEvent] {
+            def handle(e: KeyEvent) = {
+                if (bps.closed && e.getCode() == KeyCode.SPACE) {
+                    println("Let's fill")
+                    // println(bps.bound())
+                    gio.fill(bps, Color.CHARTREUSE)
+                }
+            }
+        })
+        
+        // println(Line.minDistance(Point(84.88, 66.76), Point(80.285, 67.855))(82.0, 67.0))
+        // (82.0, 67.0) : List(67.02194584611819, 67.02978922638677, NaN, NaN, 67.36602963202019)
+        // println(Line.minDistance(Point(0, 0), Point(5, 5))(5, 0))
         // testBezierApply(can, root, 10)
         // testBezierGetLayers(can, 1)
 

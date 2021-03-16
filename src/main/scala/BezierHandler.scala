@@ -47,6 +47,36 @@ trait GIO {
             }
         })
     }
+
+    def fill(b: BezierSpline, c: C): Unit = {
+        val segments = Range(0, b.c1s.length).  // knots may be circular (closed), use c1s (or c2s) size
+            map(i => Bezier(b, i)).reduce(_ ++ _)   // all bezier line segments
+        val (upleft, lowright) = b.bound()
+        Iterator.iterate(upleft.y)(_ + 1).takeWhile(_ <= lowright.y).foreach({ y =>
+            val filtered = segments.sliding(2, 1).filter(ps => 
+                (ps(0).y >= y && ps(1).y <= y) || (ps(0).y <= y && ps(1).y >= y)).toSeq
+            println(s"Y : $y, ${filtered.length} segments")
+            // if (filtered.length > 0) println(filtered.map(ps => s"${ps(0)} - ${ps(1)}").mkString(", "))
+            var cross = 0
+            var startX = 0.0
+            Iterator.iterate(upleft.x)(_ + 1).takeWhile(_ <= lowright.x).foreach{ x =>
+                val distances = filtered.map(ps => Line.minDistance(ps(0), ps(1))(x, y))
+                // println(s"($x, $y) : ${distances.toSeq}")
+                distances.minOption match {
+                    case Some(d) if d < 1.0 =>
+                        // println(s"crossing at $x, $y")
+                        cross += 1
+                        if (cross % 2 == 1) {
+                            startX = x
+                        } else {
+                            drawLine(Point(startX, y), Point(x, y), c, 1.0)
+                        }
+                    case _ =>
+                }
+            }
+        })
+        println(s"total ${segments.length} segments")
+    }
 }
 
 trait BezierHandler {

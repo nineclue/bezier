@@ -3,8 +3,7 @@ import collection.mutable.ArrayBuffer
 
 object Bezier {
     type BezierLayer = Seq[Seq[Point]]
-    // type BezierAsPoints = (ArrayBuffer[Point], ArrayBuffer[Point], ArrayBuffer[Point], Boolean)
-
+ 
     /**
       * Calculate points of Bezier curve
       *
@@ -128,7 +127,22 @@ case class BezierSpline(knots: ArrayBuffer[Point], c1s: ArrayBuffer[Point], c2s:
                 })
         } 
     }
-    
+ 
+    def bound(): (Point, Point) = {
+        val ps = knots ++ c1s ++ c2s
+        var minx = ps.head.x
+        var miny = ps.head.y
+        var maxx = ps.head.x
+        var maxy = ps.head.y
+        ps.foreach(p => {
+            if (p.x < minx) minx = p.x
+            if (p.y < miny) miny = p.y
+            if (p.x > maxx) maxx = p.x
+            if (p.y > maxy) maxy = p.y
+        })
+        (Point(minx, miny), Point(maxx, maxy))
+    }
+
     private def calcC1(ds: ArrayBuffer[Double]): ArrayBuffer[Double] = {
         val n = ds.length
         val xs = ArrayBuffer.fill(n)(0.0)
