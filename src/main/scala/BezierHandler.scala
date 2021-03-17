@@ -53,29 +53,40 @@ trait GIO {
     def fill(b: BezierSpline, c: C): Unit = {
         val segments = b.segments().sliding(2, 1).toSeq
         val (upLeft, lowRight) = b.bound()
+        val startx = upLeft.x.round.toInt
+        val starty = upLeft.y.round.toInt
+        val endx = lowRight.x.round.toInt
+        val endy = lowRight.y.round.toInt
         val fillData = 
-            Range(upLeft.y.round.toInt, lowRight.y.round.toInt).
+            Range(starty, endy + 1).
                 foldLeft(Map.empty[Int, Seq[(Int, Int)]])({ case (fillmap, y) => 
                 val filtered = segments.filter({ case ps => 
                     (ps(0).y >= y && ps(1).y <= y) || (ps(0).y <= y && ps(1).y >= y)
                 })
-                Range(upLeft.x.round.toInt, lowRight.x.round.toInt).
-                    foldLeft((0, 0, -1, fillmap))({ case ((crossed, contCount, lastX, fm), x) =>
+                // println(s"Y: $y ${filtered.length}")
+                Range(startx, endx + 1).
+                        foldLeft((0, 0, -1, fillmap))({ case ((crossed, contCount, lastX, fm), x) =>
                     filtered.map({ case ps => Line.minDistance(ps(0), ps(1), x, y)}).minOption match {
-                        case Some(d) if d <= 0 =>
-                            if (contCount == 0) {   // met a line
+                        case Some(d) if d <= 1 =>
+                            if (contCount == 0) {   // met a new line
                                 (crossed, 1, lastX, fm)
                             } else {    // crossing line
                                 (crossed, contCount + 1, lastX, fm)
                             }
                         case Some(d) =>
                             if (contCount > 0) {    // crossed line
-                                val ncross = crossed + 1
-                                if (ncross % 2 == 1) {  // entered boundary, check Y
-                                    (ncross, 0, x, fm)
-                                } else {    // out of boundary, check reverse (or Y)
-                                    drawLine(Point(lastX, y), Point(x-contCount, y), c, 1)
-                                    (ncross, 0, x, fm)
+                                // val ncross = crossed + 1
+                                // fillmap 사용으로 변경
+                                val ycrossed = ycross(segments, starty, x, y) 
+                                // if (((crossed + 1) % 2 == 1)) {  // entered boundary, check Y for false (+) : concavity
+                                if (((crossed + 1) % 2 == 1) && ((ycrossed % 2) == 1)) {  // entered boundary, check Y for false (+) : concavity
+                                    (crossed + 1, 0, x, fm)
+                                } else if (((crossed + 1) % 2 == 0)) {    // out of boundary, check reverse (or Y) for false (-) : knot
+                                // } else if (((crossed + 1) % 2 == 0) && ((ycrossed % 2) == 0)) {    // out of boundary, check reverse (or Y) for false (-) : knot
+                                    (crossed + 1, 0, x, 
+                                        fm.updated(y, fm.getOrElse(y, Seq.empty[(Int,Int)]) :+ (lastX, x-contCount)))
+                                } else {
+                                    (crossed, 0, x, fm)
                                 }
                             } else {
                                 (crossed, 0, lastX, fm)
@@ -85,7 +96,13 @@ trait GIO {
                     }
                 })._4
             })
-        // imperical version
+        fillData.foreach({ case (y, xs) =>
+            xs.foreach({ case (x1, x2) =>
+                drawLine(Point(x1, y), Point(x2, y), c, 1)
+            })
+        })
+    
+        // imperical version 
         /* 
         Range(upLeft.y.round.toInt, lowRight.y.round.toInt).foreach({ y => 
             val filtered = segments.filter({ case ps => 
@@ -129,6 +146,26 @@ trait GIO {
         })
         */
     }
+
+    // number of lines crossed before y
+    private def ycross(segments: Seq[Seq[Point]], starty: Int, x: Int, y: Int): Int = {
+        val filtered = segments.filter({ case ps => 
+            (ps(0).x >= x && ps(1).x <= x) || (ps(0).x <= x && ps(1).x >= x)
+        })
+        Range(starty, y).foldLeft((0, 0))({ case ((crossed, contCount), yy) => 
+                                    // y 방향의 거리만 계산해보자
+            filtered.map({ case ps => Line.minDistance(ps(0), ps(1), x, yy)}).minOption match {
+                case Some(d) if d <= 1 =>
+                    if (contCount == 0)    // update early (when meet a line)
+                        (crossed+1, 1)
+                    else
+                        (crossed, contCount + 1)
+                case _ =>
+                    (crossed, 0)
+            }
+        })._1
+    }
+        
 }
 
 trait BezierHandler {
