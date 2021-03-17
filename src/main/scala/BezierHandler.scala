@@ -53,16 +53,46 @@ trait GIO {
     def fill(b: BezierSpline, c: C): Unit = {
         val segments = b.segments().sliding(2, 1).toSeq
         val (upLeft, lowRight) = b.bound()
+        val fillData = 
+            Range(upLeft.y.round.toInt, lowRight.y.round.toInt).
+                foldLeft(Map.empty[Int, Seq[(Int, Int)]])({ case (fillmap, y) => 
+                val filtered = segments.filter({ case ps => 
+                    (ps(0).y >= y && ps(1).y <= y) || (ps(0).y <= y && ps(1).y >= y)
+                })
+                Range(upLeft.x.round.toInt, lowRight.x.round.toInt).
+                    foldLeft((0, 0, -1, fillmap))({ case ((crossed, contCount, lastX, fm), x) =>
+                    filtered.map({ case ps => Line.minDistance(ps(0), ps(1), x, y)}).minOption match {
+                        case Some(d) if d <= 0 =>
+                            if (contCount == 0) {   // met a line
+                                (crossed, 1, lastX, fm)
+                            } else {    // crossing line
+                                (crossed, contCount + 1, lastX, fm)
+                            }
+                        case Some(d) =>
+                            if (contCount > 0) {    // crossed line
+                                val ncross = crossed + 1
+                                if (ncross % 2 == 1) {  // entered boundary, check Y
+                                    (ncross, 0, x, fm)
+                                } else {    // out of boundary, check reverse (or Y)
+                                    drawLine(Point(lastX, y), Point(x-contCount, y), c, 1)
+                                    (ncross, 0, x, fm)
+                                }
+                            } else {
+                                (crossed, 0, lastX, fm)
+                            }
+                        case None =>
+                            (crossed, 0, lastX, fm)
+                    }
+                })._4
+            })
+        // imperical version
+        /* 
         Range(upLeft.y.round.toInt, lowRight.y.round.toInt).foreach({ y => 
             val filtered = segments.filter({ case ps => 
                 val ans = (ps(0).y >= y && ps(1).y <= y) || (ps(0).y <= y && ps(1).y >= y)
                 // println(s"Y : $y => (${ps(0).x}, ${ps(0).y}) - (${ps(1).x}, ${ps(1).y}), $ans")
                 ans
-            })
-            /*
-            Range(upLeft.x.round.toInt, lowRight.x.round.toInt).
-                foldLeft((0, 0, -1, Seq.empty[(Int, Int)]))({ case (crossed, contCount, lastX, x =>
-            */
+            })            
             var crossed = 0
             var contCount = 0
             var lastX = -1
@@ -97,6 +127,7 @@ trait GIO {
             }
             // if (lastX > 0) println(s"CHECK2!! $y")
         })
+        */
     }
 }
 
