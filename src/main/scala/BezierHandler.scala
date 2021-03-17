@@ -82,9 +82,13 @@ trait GIO {
                                 if (((crossed + 1) % 2 == 1) && ((ycrossed % 2) == 1)) {  // entered boundary, check Y for false (+) : concavity
                                     (crossed + 1, 0, x, fm)
                                 } else if (((crossed + 1) % 2 == 0)) {    // out of boundary, check reverse (or Y) for false (-) : knot
-                                // } else if (((crossed + 1) % 2 == 0) && ((ycrossed % 2) == 0)) {    // out of boundary, check reverse (or Y) for false (-) : knot
-                                    (crossed + 1, 0, x, 
-                                        fm.updated(y, fm.getOrElse(y, Seq.empty[(Int,Int)]) :+ (lastX, x-contCount)))
+                                    if (ycrossed % 2 == 1) {    // within boundary in Y coordinate => knot
+                                        (crossed + 2, 0, x, 
+                                            fm.updated(y, fm.getOrElse(y, Seq.empty[(Int,Int)]) :+ (lastX, x-contCount)))
+                                    } else {
+                                        (crossed + 1, 0, x, 
+                                            fm.updated(y, fm.getOrElse(y, Seq.empty[(Int,Int)]) :+ (lastX, x-contCount)))
+                                    }
                                 } else {
                                     (crossed, 0, x, fm)
                                 }
