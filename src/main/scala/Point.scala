@@ -14,28 +14,13 @@ object Point {
 }
 
 object Line {
-    /*
-    def minDistance(start: Point, end: Point)(p: Point) = {
-        val slope = (end.y - start.y) / (end.x - start.x)
-        val (startx, endx) = if (start.x <= end.x) (start.x, end.x) else (end.x, start.x)
-        Iterator.iterate(startx)(_ + 1).takeWhile(_ <= endx).toSeq.minBy({ x =>
-            val y = (x - startx) * slope
-            p.distance(x, y)
-        })
-    }
-    */
+    def minDistance(start: Point, end: Point, p: Point): Double = 
+        minDistance(start, end, p.x, p.y)
 
-    def minDistance(start: Point, end: Point)(x: Double, y: Double) = {
-        val slope = (end.y - start.y) / (end.x - start.x)
-        val (startx, endx, starty) = if (start.x <= end.x) (start.x, end.x, start.y) else (end.x, start.x, end.y)
-        // println(s"$startx, $endx, $slope")
-        Iterator.iterate(startx)(_ + 1).takeWhile(_ <= endx).map({ xx =>
-            val yy = (xx - startx) * slope + starty
-            val d = Point.distance(x, y, xx, yy)
-            // println(s"($xx, $yy) - ($x, $y) => $d = ($xx - $startx) * $slope")
-            d
-        }).min
-    }
+    // found at Wikipedia ;)
+    def minDistance(p1: Point, p2: Point, x: Double, y: Double): Double = 
+        math.abs((p2.x - p1.x)*(p1.y - y) - (p1.x - x) * (p2.y - p1.y)) / 
+            math.sqrt(math.pow(p2.x - p1.x, 2) + math.pow(p2.y - p1.y, 2))
 
     // def on(start: Point, end: Point)(p: Point, tolerance: Double = 1.0) = minDistance(start, end)(p) <= tolerance
 }

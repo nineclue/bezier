@@ -13,13 +13,15 @@ trait GIO {
     val lineWidth: Double
     val cLineColor: C
     val cLineWidth: Double
-
+    val debugColor: C
     def setHand(): Unit
     def setGrabbed(): Unit
     def setNormal(): Unit
     def drawLine(p1: Point, p2: Point, stroke: C, width: Double): Unit
     def drawCircle(p: Point, r: Double, fill: C, stroke: C, strokeWidth: Double): Unit
     def clear(): Unit
+    // FX does not allow get pixel information unless it is drawn & snapshotted
+    // def blankCanvas(): GIOCanvas
 
     def draw(ps: BezierSpline): Unit = {
         clear()
@@ -49,34 +51,52 @@ trait GIO {
     }
 
     def fill(b: BezierSpline, c: C): Unit = {
-        val segments = Range(0, b.c1s.length).  // knots may be circular (closed), use c1s (or c2s) size
-            map(i => Bezier(b, i)).reduce(_ ++ _)   // all bezier line segments
-        val (upleft, lowright) = b.bound()
-        Iterator.iterate(upleft.y)(_ + 1).takeWhile(_ <= lowright.y).foreach({ y =>
-            val filtered = segments.sliding(2, 1).filter(ps => 
-                (ps(0).y >= y && ps(1).y <= y) || (ps(0).y <= y && ps(1).y >= y)).toSeq
-            println(s"Y : $y, ${filtered.length} segments")
-            // if (filtered.length > 0) println(filtered.map(ps => s"${ps(0)} - ${ps(1)}").mkString(", "))
-            var cross = 0
-            var startX = 0.0
-            Iterator.iterate(upleft.x)(_ + 1).takeWhile(_ <= lowright.x).foreach{ x =>
-                val distances = filtered.map(ps => Line.minDistance(ps(0), ps(1))(x, y))
-                // println(s"($x, $y) : ${distances.toSeq}")
-                distances.minOption match {
-                    case Some(d) if d < 1.0 =>
-                        // println(s"crossing at $x, $y")
-                        cross += 1
-                        if (cross % 2 == 1) {
-                            startX = x
+        val segments = b.segments().sliding(2, 1).toSeq
+        val (upLeft, lowRight) = b.bound()
+        Range(upLeft.y.round.toInt, lowRight.y.round.toInt).foreach({ y => 
+            val filtered = segments.filter({ case ps => 
+                val ans = (ps(0).y >= y && ps(1).y <= y) || (ps(0).y <= y && ps(1).y >= y)
+                // println(s"Y : $y => (${ps(0).x}, ${ps(0).y}) - (${ps(1).x}, ${ps(1).y}), $ans")
+                ans
+            })
+            /*
+            Range(upLeft.x.round.toInt, lowRight.x.round.toInt).
+                foldLeft((0, 0, -1, Seq.empty[(Int, Int)]))({ case (crossed, contCount, lastX, x =>
+            */
+            var crossed = 0
+            var contCount = 0
+            var lastX = -1
+            // println(s"Y: $y ${filtered.length}")
+            Range(upLeft.x.round.toInt, lowRight.x.round.toInt).foreach({ x =>
+                filtered.map({ case ps => Line.minDistance(ps(0), ps(1), x, y)}).minOption match {
+                    case Some(d) =>
+                        // println(s"($x, $y) => $d")
+                        if (d <= 1.0) {
+                            if (contCount <= 0) {
+                                crossed += 1
+                                contCount = 1
+                                if (crossed % 2 == 1) { // within boundary
+                                    lastX = x
+                                } else { // gone out of boundary
+                                    // println(s"Draw line!! : ($lastX, $y) - (${x-1}, $y)")
+                                    drawLine(Point(lastX, y), Point(x-1, y), c, 1)
+                                    lastX = -1
+                                }
+                            } else {    // still crossing line
+                                contCount += 1
+                            }
                         } else {
-                            println(s"Drawing ($startX, $y) - ($x, $y)")
-                            drawLine(Point(startX, y), Point(x, y), c, 1.0)
-                        }
-                    case _ =>
+                            contCount = 0
+                        } 
+                    case None =>
                 }
+            })
+            if (crossed > 1 && crossed % 2 == 1) { 
+                println(s"CHECK! $y ($crossed) $lastX $contCount")
+                drawLine(Point(0, y), Point(10, y), debugColor, 1.0)
             }
+            // if (lastX > 0) println(s"CHECK2!! $y")
         })
-        println(s"total ${segments.length} segments")
     }
 }
 

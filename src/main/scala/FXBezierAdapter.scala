@@ -50,6 +50,7 @@ case class FXGIO(can: Canvas) extends GIO {
     val lineWidth: Double = 3.0
     val cLineColor: C = Color.TOMATO
     val cLineWidth: Double = 1.0
+    val debugColor = Color.ORANGERED
     
     val gc = can.getGraphicsContext2D
     def setHand() = can.setCursor(Cursor.HAND)

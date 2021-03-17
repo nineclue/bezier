@@ -143,6 +143,11 @@ case class BezierSpline(knots: ArrayBuffer[Point], c1s: ArrayBuffer[Point], c2s:
         (Point(minx, miny), Point(maxx, maxy))
     }
 
+    def segments() = Range(0, c1s.length).  // knots may be circular (closed), use c1s (or c2s) size
+            map(i => Bezier(this, i)).reduce(_ ++ _)   // all bezier line segments
+
+    def minDistance(p: Point) = ???
+
     private def calcC1(ds: ArrayBuffer[Double]): ArrayBuffer[Double] = {
         val n = ds.length
         val xs = ArrayBuffer.fill(n)(0.0)

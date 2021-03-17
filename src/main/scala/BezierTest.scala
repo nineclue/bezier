@@ -19,7 +19,7 @@ object BezierTest {
 }
 
 class BezierTest_ extends Application {
-    val size = 2000
+    val size = 500
     override def start(ps: Stage) = {
         val root = new Group()
         val can = new Canvas(size, size)
