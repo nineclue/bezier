@@ -50,7 +50,14 @@ trait GIO {
         })
     }
 
-    def fill(b: BezierSpline, c: C): Unit = {
+    def fill(b: BezierSpline, c: C): Unit = 
+        fillData(b).foreach({ case (y, xs) =>
+            xs.foreach({ case (x1, x2) =>
+                drawLine(Point(x1, y), Point(x2, y), c, 1)
+            })
+        })
+
+    def fillData(b: BezierSpline): Map[Int, Seq[(Int, Int)]] = {
         val segments = b.segments().sliding(2, 1).toSeq
         val (upLeft, lowRight) = b.bound()
         val startx = upLeft.x.round.toInt
@@ -75,10 +82,8 @@ trait GIO {
                             }
                         case Some(d) =>
                             if (contCount > 0) {    // crossed line
-                                // val ncross = crossed + 1
                                 // fillmap 사용으로 변경
                                 val ycrossed = ycross(segments, starty, x, y) 
-                                // if (((crossed + 1) % 2 == 1)) {  // entered boundary, check Y for false (+) : concavity
                                 if (((crossed + 1) % 2 == 1) && ((ycrossed % 2) == 1)) {  // entered boundary, check Y for false (+) : concavity
                                     (crossed + 1, 0, x, fm)
                                 } else if (((crossed + 1) % 2 == 0)) {    // out of boundary, check reverse (or Y) for false (-) : knot
@@ -100,12 +105,7 @@ trait GIO {
                     }
                 })._4
             })
-        fillData.foreach({ case (y, xs) =>
-            xs.foreach({ case (x1, x2) =>
-                drawLine(Point(x1, y), Point(x2, y), c, 1)
-            })
-        })
-    
+        fillData
         // imperical version 
         /* 
         Range(upLeft.y.round.toInt, lowRight.y.round.toInt).foreach({ y => 
@@ -128,7 +128,8 @@ trait GIO {
                                 contCount = 1
                                 if (crossed % 2 == 1) { // within boundary
                                     lastX = x
-                                } else { // gone out of boundary
+                                } else { // g
+                                    one out of boundary
                                     // println(s"Draw line!! : ($lastX, $y) - (${x-1}, $y)")
                                     drawLine(Point(lastX, y), Point(x-1, y), c, 1)
                                     lastX = -1
