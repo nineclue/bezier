@@ -14,8 +14,9 @@ import scala.concurrent.duration._
 import collection.mutable.ArrayBuffer
 
 object BezierTest {
-    def main(as: Array[String]) = 
+    def main(as: Array[String]) = {
         Application.launch(classOf[BezierTest_], as:_*)
+    }
 }
 
 class BezierTest_ extends Application {
@@ -48,12 +49,8 @@ class BezierTest_ extends Application {
             }
         })
         
-        // println(Line.minDistance(Point(84.88, 66.76), Point(80.285, 67.855))(82.0, 67.0))
-        // (82.0, 67.0) : List(67.02194584611819, 67.02978922638677, NaN, NaN, 67.36602963202019)
-        // println(Line.minDistance(Point(0, 0), Point(5, 5))(5, 0))
         // testBezierApply(can, root, 10)
         // testBezierGetLayers(can, 1)
-
     }
 
     def testBezierApply(can: Canvas, g: Group, n: Int = 5) = {

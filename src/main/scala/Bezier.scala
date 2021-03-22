@@ -101,27 +101,33 @@ case class BezierSpline(knots: ArrayBuffer[Point], c1s: ArrayBuffer[Point], c2s:
 
     def append(knot: Point): Unit = {
         knots += knot
+        calculate()
+    }
+
+    def calculate(): Unit = {
+        c1s.clear
+        c2s.clear
         knots.length match {
             case 1 => 
             case 2 => 
-                val c1 = Point((knots(0).x * 2 + knot.x) / 3, (knots(0).y * 2 + knot.y) / 3)
-                val c2 = Point(2 * c1.x - knots(0).x, (2 * c1.y - knots(0).y))
+                val c1 = Point((knots(0).x * 2 + knots(1).x) / 3, 
+                                (knots(0).y * 2 + knots(1).y) / 3)
+                val c2 = Point(c1.x * 2 - knots(0).x, 
+                                    (c1.y * 2 - knots(0).y))
                 c1s += c1
                 c2s += c2
             case n =>
                 val rhs: ArrayBuffer[(Double, Double)] = ArrayBuffer(
-                    Range(1, n-1).map(i => (knots(i).x * 4 + knots(i+1).x * 2, knots(i).y * 4 + knots(i+1).y * 2)):_*).
+                    Range(1, n-2).map(i => (knots(i).x * 4 + knots(i+1).x * 2, knots(i).y * 4 + knots(i+1).y * 2)):_*).
                     prepend((knots(0).x + knots(1).x * 2, knots(0).y + knots(1).y * 2)).
                     append(((knots(n-2).x * 8 + knots(n-1).x) / 2, (knots(n-2).y * 8 + knots(n-1).y) / 2))
                 val (rhsx, rhsy) = rhs.unzip
                 val xs = calcC1(rhsx)
                 val ys = calcC1(rhsy)
-                c1s.clear
-                c2s.clear
                 Range(0, n-1).foreach({ i => 
                     c1s += Point(xs(i), ys(i))
                     val c2 = 
-                        if (i < n-1) Point(knots(i+1).x * 2 - xs(i+1), knots(i+1).y * 2 - ys(i+1))
+                        if (i < n-2) Point(knots(i+1).x * 2 - xs(i+1), knots(i+1).y * 2 - ys(i+1))
                         else Point((knots(n-1).x + xs(n-2)) / 2, (knots(n-1).y + ys(n-2)) / 2)
                     c2s += c2
                 })
