@@ -222,6 +222,7 @@ trait BezierHandler {
                 bps.knots.update(i, p)
                 if (i == 0 && bps.closed) // move both start & end knots
                     bps.knots.update(bps.knots.length-1, p)
+                bps.calculate()
                 h.draw(bps)
             case Some((1, i)) =>
                 bps.c1s.update(i, p)
